@@ -1,2 +1,6 @@
 /.vscode
 /programa.png
+/script.bash
+/.replit
+/lib/javafx11/*
+*.class
