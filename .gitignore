@@ -3,4 +3,5 @@
 /script.bash
 /.replit
 /lib/javafx11/*
+!/lib/javafx11/bin/javafx.properties
 *.class
