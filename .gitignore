@@ -1,7 +1,14 @@
-/.vscode
-/programa.png
-/script.bash
-/.replit
+# Por favor, comentar de quiénes son los gitignore o para qué.
+
+# Mantener la carpeta de javafx11, aunque vacía, ya que los archivos de JavaFX son diferentes para Windows y Linux
 /lib/javafx11/*
 !/lib/javafx11/bin/javafx.properties
+
+# repl.it
+/.replit
+/script.bash
 *.class
+
+# Santiago Abud
+/.vscode
+/programa.png
