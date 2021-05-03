@@ -14,7 +14,7 @@ Ejemplos:
 
 | Sistema Operativo | Estructura dentro de javafx11  |
 --- | --- 
-|Windows|bin/\*.dll<br/>lib/*.jar<br/>lib/javafx.properties|
-|Linux|lib/\*.jar<br/>lib/javafx.properties<br/>lib/*.so|
+|Windows|bin/<br/>- \*.dll<br/>lib/<br/>- \*.jar<br/>- javafx.properties|
+|Linux|lib/<br/>- \*.jar<br/>- javafx.properties<br/>- \*.so|
 
 Puede encontrar todas las versiones de JavaFX en [su sitio oficial.](https://gluonhq.com/products/javafx/)
