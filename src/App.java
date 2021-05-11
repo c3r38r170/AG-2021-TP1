@@ -1,7 +1,12 @@
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
+import javafx.concurrent.Worker.State;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -13,7 +18,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.function.Consumer;
 
-public class App extends /* Application */ JFrame {
+public class App extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -39,6 +44,8 @@ public class App extends /* Application */ JFrame {
 	
 	// JLabel generaciones=new JLabel();
 	
+	private WebEngine webEngine;
+
 	private double objetivo(Individuo individuo){
 		double valorDecimal=individuo.valorDecimal;
 		return Math.pow(valorDecimal/1073741823/*2^30-1*/,2);
@@ -112,7 +119,19 @@ public class App extends /* Application */ JFrame {
 		Platform.runLater(() -> {
 			WebView webView = new WebView();
 			jfxPanel.setScene(new Scene(webView));
-			webView.getEngine().load(getClass().getResource("res/index.html").toString());
+			webEngine = webView.getEngine();
+			webEngine.load(getClass().getResource("res/index.html").toString());
+			
+			App self=this;
+			webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
+        @Override
+        public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
+					if (newState == State.SUCCEEDED) {
+						JSObject window = (JSObject) webEngine.executeScript("window");
+						window.setMember("app", self);
+					}
+				}
+      });
 		});
 
 		// TODO setTitle y setIcon
@@ -126,11 +145,11 @@ public class App extends /* Application */ JFrame {
 		this.tamañoPoblacion=10;
 		// set elitismo y seleccion
 		
-		reiniciar(tamañoPoblacion);
+		//reiniciar(tamañoPoblacion);
 			
 	}
 	
-	private void reiniciar(int tamañoPoblacion){
+	private void reiniciar(){
 		
 		// Reinicio de todas las variables.
 		sumatoriaPuntuaciones=0;
@@ -170,12 +189,12 @@ public class App extends /* Application */ JFrame {
 		mostrarGeneracion();
 	}
 	
-	private void nuevaGeneracion(){
+	public void nuevaGeneracion(){
 		viendoGeneracion++;
 		
 		if(viendoGeneracion<generations.size()+1){
 			mostrarGeneracionExistente();
-			return;
+			return null;
 		}
 		
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
@@ -273,6 +292,8 @@ public class App extends /* Application */ JFrame {
 		
 		calcularMinMaxPro();
 		mostrarGeneracion();
+
+		//return nuevaPoblacion;
 	}
 	
 	private void calcularMinMaxPro(){
@@ -332,12 +353,26 @@ public class App extends /* Application */ JFrame {
 	private void mostrarGeneracionExistente(){
 		poblacionActual=generations.get(viendoGeneracion-1);
 		sumatoriaPuntuaciones=0;
-		for(int i=0;i<tamañoPoblacion;i++){
+		for(int i=0;i<tamañoPoblacion;i++)
 			sumatoriaPuntuaciones+=objetivo(poblacionActual[i]);
-		}
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
 		calcularMinMaxPro();
 		mostrarGeneracion();
 	}
-	
+
+	//API para el frontend
+
+	private void runJS(String code){
+		webEngine.executeScript(code);
+	}
+
+	public void iniciarSimulacion(int cantidadIndividuos, int tipoSeleccion,boolean conElitismo){
+		elitismo=conElitismo;
+		seleccionPorRango=tipoSeleccion==2;
+		tamañoPoblacion=cantidadIndividuos;
+		reiniciar();
+
+		runJS("");
+	}
+
 }
