@@ -8,6 +8,7 @@
 /.replit
 /script.bash
 *.class
+*.draw
 
 # Santiago Abud
 /.vscode

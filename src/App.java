@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.function.Consumer;
 
-public class App extends /* Application */ JFrame {
+public class App extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -44,7 +44,8 @@ public class App extends /* Application */ JFrame {
 	
 	// JLabel generaciones=new JLabel();
 	
-JavaBridge jb=new JavaBridge();
+	private WebEngine webEngine;
+
 	private double objetivo(Individuo individuo){
 		double valorDecimal=individuo.valorDecimal;
 		return Math.pow(valorDecimal/1073741823/*2^30-1*/,2);
@@ -119,17 +120,16 @@ JavaBridge jb=new JavaBridge();
 		Platform.runLater(() -> {
 			WebView webView = new WebView();
 			jfxPanel.setScene(new Scene(webView));
-			WebEngine webEngine = webView.getEngine();
+			webEngine = webView.getEngine();
 			webEngine.load(getClass().getResource("res/index.html").toString());
+			
 			App self=this;
 			webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
         @Override
         public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
 					if (newState == State.SUCCEEDED) {
 						JSObject window = (JSObject) webEngine.executeScript("window");
-						// window.setMember("app", this);
-						// jb
-						window.setMember("appa", self);//this?
+						window.setMember("app", self);
 					}
 				}
       });
@@ -146,11 +146,11 @@ JavaBridge jb=new JavaBridge();
 		this.tamañoPoblacion=10;
 		// set elitismo y seleccion
 		
-		reiniciar(tamañoPoblacion);
+		//reiniciar(tamañoPoblacion);
 			
 	}
 	
-	private void reiniciar(int tamañoPoblacion){
+	private void reiniciar(){
 		
 		// Reinicio de todas las variables.
 		sumatoriaPuntuaciones=0;
@@ -195,7 +195,6 @@ JavaBridge jb=new JavaBridge();
 		
 		if(viendoGeneracion<generations.size()+1){
 			mostrarGeneracionExistente();
-			return;
 		}
 		
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
@@ -293,6 +292,8 @@ JavaBridge jb=new JavaBridge();
 		
 		calcularMinMaxPro();
 		mostrarGeneracion();
+
+		//return nuevaPoblacion;
 	}
 	
 	private void calcularMinMaxPro(){
@@ -352,22 +353,26 @@ JavaBridge jb=new JavaBridge();
 	private void mostrarGeneracionExistente(){
 		poblacionActual=generations.get(viendoGeneracion-1);
 		sumatoriaPuntuaciones=0;
-		for(int i=0;i<tamañoPoblacion;i++){
+		for(int i=0;i<tamañoPoblacion;i++)
 			sumatoriaPuntuaciones+=objetivo(poblacionActual[i]);
-		}
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
 		calcularMinMaxPro();
 		mostrarGeneracion();
 	}
-	
-public class JavaBridge{
-	public void log(String text)
-	{
-			System.out.println(text);
-			// return "done";
-			//TODO tener funciones que reciban los datos y llamarlas con executeScript
-			//webView.getEngine().executeScript("<write your javascript here>");
+
+	//API para el frontend
+
+	private void runJS(String code){
+		webEngine.executeScript(code);
 	}
-}
-	
+
+	public void iniciarSimulacion(int cantidadIndividuos, int tipoSeleccion,boolean conElitismo){
+		elitismo=conElitismo;
+		seleccionPorRango=tipoSeleccion==2;
+		tamañoPoblacion=cantidadIndividuos;
+		reiniciar();
+
+		runJS("");
+	}
+
 }
