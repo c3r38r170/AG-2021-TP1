@@ -1,7 +1,12 @@
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
+import javafx.concurrent.Worker.State;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -39,6 +44,7 @@ public class App extends /* Application */ JFrame {
 	
 	// JLabel generaciones=new JLabel();
 	
+JavaBridge jb=new JavaBridge();
 	private double objetivo(Individuo individuo){
 		double valorDecimal=individuo.valorDecimal;
 		return Math.pow(valorDecimal/1073741823/*2^30-1*/,2);
@@ -108,11 +114,25 @@ public class App extends /* Application */ JFrame {
 		JFXPanel jfxPanel = new JFXPanel();
 		add(jfxPanel);
 		
+
 		// TODO ver qué hace
 		Platform.runLater(() -> {
 			WebView webView = new WebView();
 			jfxPanel.setScene(new Scene(webView));
-			webView.getEngine().load(getClass().getResource("res/index.html").toString());
+			WebEngine webEngine = webView.getEngine();
+			webEngine.load(getClass().getResource("res/index.html").toString());
+			App self=this;
+			webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<State>() {
+        @Override
+        public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
+					if (newState == State.SUCCEEDED) {
+						JSObject window = (JSObject) webEngine.executeScript("window");
+						// window.setMember("app", this);
+						// jb
+						window.setMember("appa", self);//this?
+					}
+				}
+      });
 		});
 
 		// TODO setTitle y setIcon
@@ -170,7 +190,7 @@ public class App extends /* Application */ JFrame {
 		mostrarGeneracion();
 	}
 	
-	private void nuevaGeneracion(){
+	public void nuevaGeneracion(){
 		viendoGeneracion++;
 		
 		if(viendoGeneracion<generations.size()+1){
@@ -339,5 +359,15 @@ public class App extends /* Application */ JFrame {
 		calcularMinMaxPro();
 		mostrarGeneracion();
 	}
+	
+public class JavaBridge{
+	public void log(String text)
+	{
+			System.out.println(text);
+			// return "done";
+			//TODO tener funciones que reciban los datos y llamarlas con executeScript
+			//webView.getEngine().executeScript("<write your javascript here>");
+	}
+}
 	
 }
