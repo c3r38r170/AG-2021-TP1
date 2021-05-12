@@ -44,9 +44,9 @@ public class Individuo implements Comparable<Individuo>{
 			
 			// Actualizamos el valor decimal.
 			double delta=Math.pow(2, 29-gen);
-			if(cromosoma[gen]){
+			if(cromosoma[gen])
 				valorDecimal+=delta;
-			}else valorDecimal-=delta;
+			else valorDecimal-=delta;
 		}
 	}
 	
@@ -55,6 +55,10 @@ public class Individuo implements Comparable<Individuo>{
 		for(boolean gen:cromosoma)
 			sb.append(gen?"1":"0");
 		return sb.toString();
+	}
+
+	public String toJSONObject() {
+		return "{fitness:"+fitness+",cromosoma:\""+cromosomaToString()+"\",valorDecimal:"+valorDecimal+"}";
 	}
 	
 	@Override
@@ -66,5 +70,4 @@ public class Individuo implements Comparable<Individuo>{
 	public int compareTo(Individuo otro) {
 		return otro.valorDecimal - this.valorDecimal;
 	}
-	
 }
