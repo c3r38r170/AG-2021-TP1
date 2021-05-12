@@ -34,7 +34,8 @@ public class App extends JFrame {
 	private int tamañoPoblacion=0;
 	
 	private WebEngine webEngine;
-
+ 
+  // Función que sirve para darle el fitness a cada individuo.
 	private double objetivo(Individuo individuo){
 		double valorDecimal=individuo.valorDecimal;
 		return Math.pow(valorDecimal/1073741823/*2^30-1*/,2);
@@ -73,17 +74,17 @@ public class App extends JFrame {
 		});
 
 		// Preparación de la ventana.
-		// TODO setTitle y setIcon
+		// TODO setIcon
+		setTitle("Algoritmos Genéticos - TP1");
 		Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
-		setSize(screenSize.width/2,screenSize.height/2);
-		setLocation(screenSize.width/4, screenSize.height/4);
+		setSize(screenSize.width*3/4,screenSize.height/2);
+		setLocation(screenSize.width/8, screenSize.height/4);
 		setVisible(true);
 	}
 	
 	private void reiniciar(){
-		// Reinicio de todas las variables.
+
 		sumatoriaPuntuaciones=0;
-		
 		// Generación de la primera población aleatoria.
 		poblacionActual=new Individuo[tamañoPoblacion];
 		for(int i=0;i<tamañoPoblacion;i++){
@@ -118,7 +119,7 @@ public class App extends JFrame {
 		double[] vectorProbabilidades=new double[tamañoPoblacion];
 		Consumer<Integer> calculoDeProbabilidades=seleccionPorRango?
 			// En la selección por rango, la probabilidad de crossover se basa en el rango (1ro, 2do, 3ro...) del individuo en la población.
-			j->vectorProbabilidades[j]=(1.2-.4* j /(tamañoPoblacion-1))/tamañoPoblacion
+			j->vectorProbabilidades[j]=(1.2-.4* /* j es el rango (0 es el más alto) -> */ j /* <- */ /(tamañoPoblacion-1))/tamañoPoblacion
 			// En la selección por ruleta, usamos el fitness para calcular las probabilidades de crossover.
 			:j->vectorProbabilidades[j]=poblacionActual[j].fitness/sumatoriaPuntuaciones
 		;
@@ -127,7 +128,7 @@ public class App extends JFrame {
 		
 		sumatoriaPuntuaciones=0;
 			
-		// Aplicación de seleccion.
+		// Aplicación de selección.
 		for(int j=0;j<cantidadPares;j++){
 			int j1=j*2,j2=j1+1;
 			boolean elegido1=false
@@ -137,7 +138,7 @@ public class App extends JFrame {
 				,acc=0;
 			Individuo individuo1=null
 				,individuo2=null;
-			//Los nulls son para que no me tire la advertencia "The local variable may not have been initialized" más abajo en la IDE.
+			// Los nulls son para que no me tire la advertencia "The local variable may not have been initialized" más abajo en la IDE.
 			
 			// No hay forma de que la probabilidad (selector 1 y 2) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
 			// Por lo que este for va a en algún momento terminar con elegido1 y elegido2.
@@ -157,14 +158,14 @@ public class App extends JFrame {
 			// Aún así, a veces por división de punto flotante, la suma no es exactamente igual a 1 y el número aleatorio puede entrar en ese margen de error.
 			// Por lo que en ese caso, elegimos el último.
 			// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
-			// Esto ocurre máximo en un individuo de cada 300 generaciones, pudiendo no aparecer por miles de generaciones.
+			// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 300 generaciones, pudiendo no aparecer por miles de generaciones.
 		// TODO de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
 			if(!elegido1)
 				individuo1=poblacionActual[tamañoPoblacion-1];
 			if(!elegido2)
 				individuo2=poblacionActual[tamañoPoblacion-1];
 			
-			//crossover
+			// Aplicación de crossover. (Se encarga la clase Individuo)
 			if(Math.random()>.75){
 				nuevaPoblacion[j1]=individuo1;
 				nuevaPoblacion[j2]=individuo2;
@@ -178,14 +179,14 @@ public class App extends JFrame {
 			nuevaPoblacion[j1].aplicarMutacion();
 			nuevaPoblacion[j2].aplicarMutacion();
 			
-			// cálculo del fitness
+			// Cálculo del fitness. (Ver método objetivo.)
 			double fitness1=objetivo(nuevaPoblacion[j1])
 				,fitness2=objetivo(nuevaPoblacion[j2]);
 			
 			nuevaPoblacion[j1].fitness=fitness1;
 			nuevaPoblacion[j2].fitness=fitness2;
 			
-			// fitness acumulada de la generación (sirve para la próxima selección)
+			// Fitness acumulada de la generación (sirve para la próxima selección);
 			sumatoriaPuntuaciones+=fitness1+fitness2;
 		}
 		
@@ -207,13 +208,12 @@ public class App extends JFrame {
 	}
 	
 	private void calcularMinMaxPro(){
-		// TODO revisar que la comparación sea correcta (en Compare)
 		maximoIndividuo=poblacionActual[0];
 		minimoIndividuo=poblacionActual[tamañoPoblacion-1];
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
 	}
 
-	//API para el frontend
+	// API para el frontend.
 
 	private void mandarGeneracionActual(){
 		StringBuilder JSCommand=new StringBuilder("proximaGeneracion({min:"+minimoIndividuo.fitness+",pro:"+promedio+",max:"+maximoIndividuo.fitness+",individuos:[");
@@ -223,10 +223,7 @@ public class App extends JFrame {
 			poblacionAsJSON[i]=poblacionActual[i].toJSONObject();
 		
 		JSCommand.append(String.join(",",poblacionAsJSON)+"]});");
-		// System.out.println(
-			webEngine.executeScript(JSCommand.toString())
-		// )
-		;
+		webEngine.executeScript(JSCommand.toString());
 	}
 
 	public void iniciarSimulacion(int cantidadIndividuos, int tipoSeleccion,boolean conElitismo){

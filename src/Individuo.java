@@ -7,6 +7,7 @@ public class Individuo implements Comparable<Individuo>{
 	public Individuo(boolean[] cromosoma){
 		this.cromosoma=cromosoma;
 		
+		// Pasaje a decimal.
 		for(int i=0;i<30;i++){
 			if(cromosoma[i])
 				this.valorDecimal+=Math.pow(2,(29-i));
@@ -14,13 +15,14 @@ public class Individuo implements Comparable<Individuo>{
 	}
 	
 	public Individuo[] crossover(Individuo pareja){
-		
-		// choose a point
-		//create 2 cromosomas
+
+    // Elegir un punto.
+    // Crear 2 nuevos cromosomas.
 		boolean[] cromosomaNuevo1=new boolean[30]
 			,cromosomaNuevo2=new boolean[30];
 		
-		int point=Utils.randomIntBetween(0, 28);//son los 29 puntos entre los 30 genes
+		int point=Utils.randomIntBetween(0, 28);
+		// Son los 29 puntos entre los 30 genes.
 		
 		for(int i=0;i<=29;i++){
 			cromosomaNuevo1[i]=this.cromosoma[i];
@@ -33,7 +35,10 @@ public class Individuo implements Comparable<Individuo>{
 			}
 		}
 		
-		return new Individuo[]{new Individuo(cromosomaNuevo1),new Individuo(cromosomaNuevo2)};
+		return new Individuo[]{
+			new Individuo(cromosomaNuevo1)
+			,new Individuo(cromosomaNuevo2)
+		};
 	}
 	
 	public void aplicarMutacion(){
