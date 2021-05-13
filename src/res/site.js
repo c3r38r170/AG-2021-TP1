@@ -144,8 +144,8 @@ addEventListener('DOMContentLoaded',()=>{
 			generacion.remove();
 		app.iniciarSimulacion(
 			gEt('modal-individuos').value
-			,qS('[name="ruleta"]:checked').value
-			,gEt('modal-elitismo').value
+			,qS('[name="ruleta"]:checked')[0].value
+			,gEt('modal-elitismo').checked
 		);
 	};
 

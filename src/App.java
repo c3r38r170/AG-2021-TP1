@@ -109,12 +109,6 @@ public class App extends JFrame {
 	private void nuevaGeneracion(){
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
 		int cantidadPares=tamañoPoblacion/2;
-		if(elitismo){
-			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
-			cantidadPares--;
-			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0];
-			nuevaPoblacion[tamañoPoblacion-2]=poblacionActual[1];
-		}
 		
 		double[] vectorProbabilidades=new double[tamañoPoblacion];
 		Consumer<Integer> calculoDeProbabilidades=seleccionPorRango?
@@ -127,6 +121,13 @@ public class App extends JFrame {
 			calculoDeProbabilidades.accept(j);
 		
 		sumatoriaPuntuaciones=0;
+		if(elitismo){
+			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
+			cantidadPares--;
+			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0];
+			nuevaPoblacion[tamañoPoblacion-2]=poblacionActual[1];
+			sumatoriaPuntuaciones=poblacionActual[0].fitness+poblacionActual[1].fitness;
+		}
 			
 		// Aplicación de selección.
 		for(int j=0;j<cantidadPares;j++){
