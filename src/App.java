@@ -82,8 +82,8 @@ public class App extends JFrame {
 		setVisible(true);
 	}
 	
+  // Función para iniciar la simulación.
 	private void reiniciar(){
-
 		sumatoriaPuntuaciones=0;
 		// Generación de la primera población aleatoria.
 		poblacionActual=new Individuo[tamañoPoblacion];
@@ -106,6 +106,7 @@ public class App extends JFrame {
 		calcularMinMaxPro();
 	}
 	
+  // Función para realizar cada generación de la simulación.
 	private void nuevaGeneracion(){
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
 		int cantidadPares=tamañoPoblacion/2;
@@ -121,6 +122,7 @@ public class App extends JFrame {
 			calculoDeProbabilidades.accept(j);
 		
 		sumatoriaPuntuaciones=0;
+		
 		if(elitismo){
 			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
 			cantidadPares--;
@@ -203,11 +205,13 @@ public class App extends JFrame {
 		calcularMinMaxPro();
 	}
 
+	// Ordenamos la población para facilitar el cálculo del máximo, mínimo y promedio.
 	private void ordenarPoblacion(Individuo[] poblacion){
-		// Ordenamos la población para facilitar el cálculo del máximo, mínimo y promedio.
 		Arrays.sort(poblacion);
 	}
-	
+
+  // Función que calcula Mínimo, Máximo y Promedio de cada generación.
+  // Solo calcula el promedio, ya que los individuos se encuentran ordenados en la población.
 	private void calcularMinMaxPro(){
 		maximoIndividuo=poblacionActual[0];
 		minimoIndividuo=poblacionActual[tamañoPoblacion-1];
