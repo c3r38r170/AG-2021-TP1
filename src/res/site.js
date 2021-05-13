@@ -3,7 +3,11 @@ if(!app)
 	var app={
 		siguienteGeneracion:function(){
 			proximaGeneracion({
-				individuos:new Array(10).fill().map((el,i)=>[i+1,  1, 0.5, 0.1])
+				individuos:new Array(10).fill().map((el,i)=>({
+					fitness:0.7
+					,cromosoma:'010100101011001010010101'
+					,valorDecimal:5419669
+				}))
 				,min:0
 				,pro:.5
 				,max:Math.random()
@@ -11,7 +15,11 @@ if(!app)
 		}
 		,iniciarSimulacion:function(){
 			proximaGeneracion({
-				individuos:new Array(10).fill().map((el,i)=>[i+1,  1, 0.5, 0.1])
+				individuos:new Array(10).fill().map((el,i)=>({
+					fitness:0.7
+					,cromosoma:'010100101011001010010101'
+					,valorDecimal:5419669
+				}))
 				,min:0
 				,pro:.5
 				,max:1
@@ -59,7 +67,6 @@ function actualizarGrafico(){
 			height: 450,
 			width: 600
 			,pointSize:5
-			,legend:'none'
 		}
 	);
 }
@@ -92,7 +99,34 @@ function proximaGeneracion(generacion){
 		,generacion.min
 	]);
 	actualizarGrafico();
-	//añadir a la tabla
+	let generacionesTabla=gEt('generaciones');
+	let nuevaGeneracion=document.createElement('DIV');
+	nuevaGeneracion.classList.add('generaciones-n');
+
+	nuevaGeneracion.innerHTML=`
+<div class="generaciones-n-individuos">
+	<span class="generaciones-n-individuos-header">Individuo</span>
+	<span class="generaciones-n-individuos-header">Genoma</span>
+	<span class="generaciones-n-individuos-header">Valor decimal</span>
+	<span class="generaciones-n-individuos-header">Fitness</span>
+	${generacion.individuos.reduce((acc,el,i)=>{
+		acc+=[
+			i+1
+			,el.cromosoma
+			,el.valorDecimal
+			,el.fitness.toFixed(7)
+		].reduce((ac,e)=>ac+`<span>${e}</span>`,'');
+		return acc;
+	},'')}
+</div>
+<div class="generaciones-n-resumen">
+	<span>${generaciones.length}</span>
+	<span>${generacion.min.toFixed(7)}</span>
+	<span>${generacion.pro.toFixed(7)}</span>
+	<span>${generacion.max.toFixed(7)}</span>
+</div>
+`;
+	generacionesTabla.append(nuevaGeneracion);
 }
 
 //onload
@@ -105,7 +139,9 @@ addEventListener('DOMContentLoaded',()=>{
 
 	gEt('modal-iniciar').onclick=()=>{
 		grafico.data=crearData();
-			//borrar tabla
+		generaciones=[];
+		for(let generacion of [...qS('.generaciones-n')])
+			generacion.remove();
 		app.iniciarSimulacion(
 			gEt('modal-individuos').value
 			,qS('[name="ruleta"]:checked').value
@@ -116,5 +152,12 @@ addEventListener('DOMContentLoaded',()=>{
 	gEt('controles-siguiente').onclick=()=>{
 		for(let i=0,to=gEt('controles-pasos').value;i<to;i++)
 			app.siguienteGeneracion();
+	}
+
+	gEt('generaciones').onclick=e=>{
+		let t=e.target;
+		let resumen=t.closest('.generaciones-n-resumen');
+		if(resumen)
+			resumen.previousElementSibling.classList.toggle('generaciones-n-individuos-shown');
 	}
 });

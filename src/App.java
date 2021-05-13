@@ -1,9 +1,9 @@
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.function.Consumer;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
@@ -74,11 +74,11 @@ public class App extends JFrame {
 		});
 
 		// Preparación de la ventana.
-		// TODO setIcon
+		setIconImage(new ImageIcon(getClass().getResource("/res/Logo AG.png")).getImage());
 		setTitle("Algoritmos Genéticos - TP1");
 		Dimension screenSize=Toolkit.getDefaultToolkit().getScreenSize();
-		setSize(screenSize.width*3/4,screenSize.height/2);
-		setLocation(screenSize.width/8, screenSize.height/4);
+		setSize(screenSize.width*3/4,screenSize.height*3/4);
+		setLocation(screenSize.width/8, screenSize.height/8);
 		setVisible(true);
 	}
 	
