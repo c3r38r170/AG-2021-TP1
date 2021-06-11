@@ -120,6 +120,7 @@ public class App extends JFrame {
 			nuevaGeneracionPorRango()
 			:nuevaGeneracionPorRuleta();
 		
+mostrarPoblacion(nuevaPoblacion, 0);
 		// Por ahora no, dijo el profe.
 		// if(convergencia)
 			// break
@@ -129,6 +130,8 @@ public class App extends JFrame {
 		ordenarPoblacion(nuevaPoblacion);
 		poblacionActual=nuevaPoblacion;
 		
+mostrarPoblacion(poblacionActual, 1);
+
 		calcularMinMaxPro();
 	}
 
@@ -139,8 +142,8 @@ public class App extends JFrame {
 		if(elitismo){ // No aplicable a la selección por rango.
 			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
 			cantidadPares--;
-			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0];
-			nuevaPoblacion[tamañoPoblacion-2]=poblacionActual[1];
+			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0].crearClon();
+			nuevaPoblacion[tamañoPoblacion-2]=poblacionActual[1].crearClon();
 			sumatoriaPuntuaciones=poblacionActual[0].valorFuncionObjetivo+poblacionActual[1].valorFuncionObjetivo;
 		}
 			
@@ -148,8 +151,8 @@ public class App extends JFrame {
 			
 			// Aplicación de selección.
 			int j1=j*2,j2=j1+1;
-			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness)]
-				,individuo2=poblacionActual[elegirIndicePorRuleta(vectorFitness)];
+			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness)].crearClon()
+				,individuo2=poblacionActual[elegirIndicePorRuleta(vectorFitness)].crearClon();
 	
 			// Aplicación de crossover. (Se encarga la clase Individuo)
 			if(individuo1.equals(individuo2) || Math.random()>.75){
@@ -165,15 +168,15 @@ public class App extends JFrame {
 			nuevaPoblacion[j1].aplicarMutacion();
 			nuevaPoblacion[j2].aplicarMutacion();
 			
-			// Cálculo del fitness. (Ver método objetivo.)
-			double fitness1=objetivo(nuevaPoblacion[j1])
-				,fitness2=objetivo(nuevaPoblacion[j2]);
+			// Cálculo del valor objetivo. (Ver método objetivo.)
+			double valorObjetivo1=objetivo(nuevaPoblacion[j1])
+				,valorObjetivo2=objetivo(nuevaPoblacion[j2]);
 			
-			nuevaPoblacion[j1].valorFuncionObjetivo=fitness1;
-			nuevaPoblacion[j2].valorFuncionObjetivo=fitness2;
+			nuevaPoblacion[j1].valorFuncionObjetivo=valorObjetivo1;
+			nuevaPoblacion[j2].valorFuncionObjetivo=valorObjetivo2;
 			
-			// Fitness acumulada de la generación (sirve para la próxima selección);
-			sumatoriaPuntuaciones+=fitness1+fitness2;
+			// valorObjetivo acumulada de la generación (sirve para la próxima selección);
+			sumatoriaPuntuaciones+=valorObjetivo1+valorObjetivo2;
 		}
 
 		return nuevaPoblacion;
@@ -189,7 +192,7 @@ public class App extends JFrame {
 		int m=Utils.randomIntBetween(1, tamañoPoblacion/2);
 		System.out.println(m);
 		for(int i=0,til=tamañoPoblacion-m*2;i<til;i++){
-			Individuo delMedio=poblacionActual[i+m];
+			Individuo delMedio=poblacionActual[i+m].crearClon();
 			nuevaPoblacion[tamañoPoblacion-i-1]=delMedio;
 			sumatoriaPuntuaciones+=delMedio.valorFuncionObjetivo;
 			System.out.println("saved into "+(tamañoPoblacion-i-1)+": "+delMedio);
@@ -199,36 +202,47 @@ public class App extends JFrame {
 			
 			// Aplicación de selección.
 			int j1=j*2,j2=j1+1;
-			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness,j)]
-				,individuo2=poblacionActual[j];
+			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness,j)].crearClon()
+				,individuo2=poblacionActual[j].crearClon();
 			nuevaPoblacion[j2]=individuo2;
 	
 			// Aplicación de crossover. (Se encarga la clase Individuo)
-			nuevaPoblacion[j1]=Math.random()>.75?
-				individuo1
+			if(Math.random()<.25)
+				nuevaPoblacion[j1]=individuo1;
+			else{
 				// TODO preguntar con qué hijo me quedo
-				:individuo1.crossover(individuo2)[0];
+				nuevaPoblacion[j1]=individuo1.crossover(individuo2)[0];
+				nuevaPoblacion[j1].valorFuncionObjetivo=objetivo(nuevaPoblacion[j1]);
+			}
 			
 			// Aplicación de mutación.
-			nuevaPoblacion[j1].aplicarMutacion();
-			// TODO preguntar si aplica
-			individuo2.aplicarMutacion();
+			if(nuevaPoblacion[j1].aplicarMutacion())
+				nuevaPoblacion[j1].valorFuncionObjetivo=objetivo(nuevaPoblacion[j1]);
+			if(individuo2.aplicarMutacion())
+				individuo2.valorFuncionObjetivo=objetivo(individuo2);
 			
 			// Cálculo del valor de la función objetivo para este indivicuo. (Ver método objetivo.)
-			double valor=objetivo(nuevaPoblacion[j1]);
-			nuevaPoblacion[j1].valorFuncionObjetivo=valor;
 			
 			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección);
-			sumatoriaPuntuaciones+=valor+individuo2.valorFuncionObjetivo;
+			sumatoriaPuntuaciones+=nuevaPoblacion[j1].valorFuncionObjetivo+individuo2.valorFuncionObjetivo;
 			System.out.println("pareja: "+j);
 			System.out.println("saved into "+j1+": "+nuevaPoblacion[j1]);
 			System.out.println("saved into "+j2+": "+individuo2);
 		}
 
+mostrarPoblacion(nuevaPoblacion, -1);
+
 		System.out.println("Total: "+sumatoriaPuntuaciones);
 
 		return nuevaPoblacion;
 	}
+
+private void mostrarPoblacion(Individuo[] p,int a){
+	System.out.println("a"+a);
+	for (Individuo individuo : p) {
+		System.out.println(individuo);
+	}
+}
 
 	private int elegirIndicePorRuleta(double[] vectorFitness, int evitar) {
 		// En este método evitamos uno de los índices.
@@ -285,7 +299,8 @@ public class App extends JFrame {
 		maximoIndividuo=poblacionActual[0];
 		minimoIndividuo=poblacionActual[tamañoPoblacion-1];
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
-		if(Double.compare(promedio,maximoIndividuo.valorFuncionObjetivo)>0){
+		if(promedio-maximoIndividuo.valorFuncionObjetivo>1e-15){
+			mostrarPoblacion(poblacionActual, 2);
 			System.out.println(promedio-maximoIndividuo.valorFuncionObjetivo);
 			System.out.println("\"Oh no.\" -Knuckles");
 		}

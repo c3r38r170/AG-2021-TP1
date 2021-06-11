@@ -129,8 +129,6 @@ function proximaGeneracion(generacion){
 	generacionesTabla.append(nuevaGeneracion);
 }
 
-// TODO rango on check disable elitismo
-
 //onload
 addEventListener('DOMContentLoaded',()=>{
 	$('table').bootstrapTable({
@@ -161,5 +159,15 @@ addEventListener('DOMContentLoaded',()=>{
 		let resumen=t.closest('.generaciones-n-resumen');
 		if(resumen)
 			resumen.previousElementSibling.classList.toggle('generaciones-n-individuos-shown');
+	}
+
+	gEt('modal-rango').onclick=()=>{
+		let elitismo=gEt('modal-elitismo');
+		elitismo.checked=false;
+		elitismo.disabled=true;
+	}
+
+	gEt('modal-ruleta').onclick=()=>{
+		gEt('modal-elitismo').disabled=false;
 	}
 });

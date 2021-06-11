@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class Individuo implements Comparable<Individuo>{
 	
 	boolean[] cromosoma;
@@ -17,7 +19,10 @@ public class Individuo implements Comparable<Individuo>{
 	public Individuo[] crossover(Individuo pareja){
 
 		if(this.equals(pareja)){
-			return new Individuo[]{this,this};
+			return new Individuo[]{
+				new Individuo(Arrays.copyOf(this.cromosoma, this.cromosoma.length))
+				,new Individuo(Arrays.copyOf(this.cromosoma, this.cromosoma.length))
+			};
 		}
 
     // Elegir un punto.
@@ -45,7 +50,7 @@ public class Individuo implements Comparable<Individuo>{
 		};
 	}
 	
-	public void aplicarMutacion(){
+	public boolean aplicarMutacion(){
 		if(Math.random()<0.05){
 			int gen=Utils.randomIntBetween(0, 29);
 			// Método de Mutación: invertida
@@ -56,9 +61,16 @@ public class Individuo implements Comparable<Individuo>{
 			if(cromosoma[gen])
 				valorDecimal+=delta;
 			else valorDecimal-=delta;
-		}
+			return true;
+		} else return false;
 	}
-	
+
+	public Individuo crearClon(){
+		Individuo clon=new Individuo(Arrays.copyOf(cromosoma,cromosoma.length));
+		clon.valorFuncionObjetivo=valorFuncionObjetivo;
+		return clon;
+	}
+
 	public String cromosomaToString(){
 		StringBuilder sb=new StringBuilder();
 		for(boolean gen:cromosoma)
