@@ -134,7 +134,7 @@ public class App extends JFrame {
 		int cantidadPares=tamañoPoblacion/2;
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
 
-		if(elitismo){ // No aplicable a la selección por rango.
+		if(elitismo){
 			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
 			cantidadPares--;
 			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0].crearClon();
@@ -170,7 +170,7 @@ public class App extends JFrame {
 			nuevaPoblacion[j1].valorFuncionObjetivo=valorObjetivo1;
 			nuevaPoblacion[j2].valorFuncionObjetivo=valorObjetivo2;
 			
-			// valorObjetivo acumulada de la generación (sirve para la próxima selección);
+			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección).
 			sumatoriaPuntuaciones+=valorObjetivo1+valorObjetivo2;
 		}
 
@@ -185,6 +185,7 @@ public class App extends JFrame {
 		int m=Utils.randomIntBetween(1, tamañoPoblacion/2);
 		for(int i=0,til=tamañoPoblacion-m*2;i<til;i++){
 			Individuo delMedio=poblacionActual[i+m].crearClon();
+			// TODO aplicar 
 			nuevaPoblacion[tamañoPoblacion-i-1]=delMedio;
 			sumatoriaPuntuaciones+=delMedio.valorFuncionObjetivo;
 		}
@@ -200,21 +201,18 @@ public class App extends JFrame {
 			// Aplicación de crossover. (Se encarga la clase Individuo)
 			if(Math.random()<.25)
 				nuevaPoblacion[j1]=individuo1;
-			else{
+			else{ 
+        // Elegimos un hijo arbitrariamente.
 				// TODO preguntar con qué hijo me quedo
-				nuevaPoblacion[j1]=individuo1.crossover(individuo2)[0];
+				nuevaPoblacion[j1]=individuo1.crossover(individuo2)[(int)Math.round(Math.random())];
 				nuevaPoblacion[j1].valorFuncionObjetivo=objetivo(nuevaPoblacion[j1]);
 			}
 			
 			// Aplicación de mutación.
 			if(nuevaPoblacion[j1].aplicarMutacion())
 				nuevaPoblacion[j1].valorFuncionObjetivo=objetivo(nuevaPoblacion[j1]);
-			if(individuo2.aplicarMutacion())
-				individuo2.valorFuncionObjetivo=objetivo(individuo2);
 			
-			// Cálculo del valor de la función objetivo para este indivicuo. (Ver método objetivo.)
-			
-			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección);
+			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección).
 			sumatoriaPuntuaciones+=nuevaPoblacion[j1].valorFuncionObjetivo+individuo2.valorFuncionObjetivo;
 		}
 
@@ -223,32 +221,24 @@ public class App extends JFrame {
 
 	private int elegirIndicePorRuleta(double[] vectorFitness, int evitar) {
 		// En este método evitamos uno de los índices.
-		double acc=0
-			,selector=0;
+		double totalSumaVector=0;
 		for(int i=0,til=vectorFitness.length;i<til;i++){
 			if(i==evitar)
 				continue;
-			selector+=vectorFitness[i];
+			totalSumaVector+=vectorFitness[i];
 		}
-		selector=Math.random()*selector;
+		totalSumaVector=Math.random()*totalSumaVector;
 
-		// No hay forma de que la probabilidad (selector) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
-		// Por lo que este for va a en algún momento terminar con un elegido.
 		vectorFitness[evitar]=vectorFitness[vectorFitness.length-1];
-		for(int l=0,til=vectorFitness.length-1;l<til;l++){
-			acc+=vectorFitness[l];
-			if(acc>selector)
-				return l;
-		}
-		// Aún así, a veces por división de punto flotante, la suma no es exactamente igual a 1 y el número aleatorio puede entrar en ese margen de error.
-		// Por lo que en ese caso, elegimos el último.
-		// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
-		// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 600 generaciones, pudiendo no aparecer por miles de generaciones.
-		return vectorFitness.length-1;
+		return elegirIndicePorRuleta(Arrays.copyOf(vectorFitness, vectorFitness.length-1),totalSumaVector);
+	}
+	
+	private int elegirIndicePorRuleta(double[] vectorFitness){
+		return elegirIndicePorRuleta(vectorFitness, 1.0);
 	}
 
-	private int elegirIndicePorRuleta(double[] vectorFitness){
-		double acc=0,selector=Math.random();
+	private int elegirIndicePorRuleta(double[] vectorFitness, double totalSumaVector){
+		double acc=0,selector=Math.random()*totalSumaVector;
 		// No hay forma de que la probabilidad (selector) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
 		// Por lo que este for va a en algún momento terminar con un elegido.
 		for(int l=0;l<vectorFitness.length;l++){
