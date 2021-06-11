@@ -54,7 +54,6 @@ public class App extends JFrame {
 		JFXPanel jfxPanel = new JFXPanel();
 		add(jfxPanel);
 		
-		// TODO ver qué hace
 		Platform.runLater(() -> {
 			WebView webView = new WebView();
 			jfxPanel.setScene(new Scene(webView));
@@ -112,7 +111,6 @@ public class App extends JFrame {
 		vectorFitness=new double[tamañoPoblacion];
 		for(int j=0;j<tamañoPoblacion;j++)
 			vectorFitness[j]=poblacionActual[j].valorFuncionObjetivo/sumatoriaPuntuaciones;
-			// calculoDeProbabilidades.accept(j);
 		
 		sumatoriaPuntuaciones=0;
 
@@ -120,7 +118,6 @@ public class App extends JFrame {
 			nuevaGeneracionPorRango()
 			:nuevaGeneracionPorRuleta();
 		
-mostrarPoblacion(nuevaPoblacion, 0);
 		// Por ahora no, dijo el profe.
 		// if(convergencia)
 			// break
@@ -130,8 +127,6 @@ mostrarPoblacion(nuevaPoblacion, 0);
 		ordenarPoblacion(nuevaPoblacion);
 		poblacionActual=nuevaPoblacion;
 		
-mostrarPoblacion(poblacionActual, 1);
-
 		calcularMinMaxPro();
 	}
 
@@ -185,17 +180,13 @@ mostrarPoblacion(poblacionActual, 1);
 	private Individuo[] nuevaGeneracionPorRango(){
 		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
 
-		System.out.println("Empieza");
-
 		// Elegimos un M de individuos aleatorio, mayor o igual a 1, menor o igual a la mitad de individuos.
 		// Y pasamos todos los individuos menos los M que reemplazaremos por descendencia de los mejores M.
 		int m=Utils.randomIntBetween(1, tamañoPoblacion/2);
-		System.out.println(m);
 		for(int i=0,til=tamañoPoblacion-m*2;i<til;i++){
 			Individuo delMedio=poblacionActual[i+m].crearClon();
 			nuevaPoblacion[tamañoPoblacion-i-1]=delMedio;
 			sumatoriaPuntuaciones+=delMedio.valorFuncionObjetivo;
-			System.out.println("saved into "+(tamañoPoblacion-i-1)+": "+delMedio);
 		}
 			
 		for(int j=0;j<m;j++){
@@ -225,24 +216,10 @@ mostrarPoblacion(poblacionActual, 1);
 			
 			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección);
 			sumatoriaPuntuaciones+=nuevaPoblacion[j1].valorFuncionObjetivo+individuo2.valorFuncionObjetivo;
-			System.out.println("pareja: "+j);
-			System.out.println("saved into "+j1+": "+nuevaPoblacion[j1]);
-			System.out.println("saved into "+j2+": "+individuo2);
 		}
-
-mostrarPoblacion(nuevaPoblacion, -1);
-
-		System.out.println("Total: "+sumatoriaPuntuaciones);
 
 		return nuevaPoblacion;
 	}
-
-private void mostrarPoblacion(Individuo[] p,int a){
-	System.out.println("a"+a);
-	for (Individuo individuo : p) {
-		System.out.println(individuo);
-	}
-}
 
 	private int elegirIndicePorRuleta(double[] vectorFitness, int evitar) {
 		// En este método evitamos uno de los índices.
@@ -267,7 +244,6 @@ private void mostrarPoblacion(Individuo[] p,int a){
 		// Por lo que en ese caso, elegimos el último.
 		// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
 		// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 600 generaciones, pudiendo no aparecer por miles de generaciones.
-	// TODO ver si el siguiente error todavía pasa: de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
 		return vectorFitness.length-1;
 	}
 
@@ -284,7 +260,6 @@ private void mostrarPoblacion(Individuo[] p,int a){
 		// Por lo que en ese caso, elegimos el último.
 		// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
 		// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 600 generaciones, pudiendo no aparecer por miles de generaciones.
-	// TODO ver si el siguiente error todavía pasa: de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
 		return vectorFitness.length-1;
 	}
 
@@ -299,11 +274,6 @@ private void mostrarPoblacion(Individuo[] p,int a){
 		maximoIndividuo=poblacionActual[0];
 		minimoIndividuo=poblacionActual[tamañoPoblacion-1];
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
-		if(promedio-maximoIndividuo.valorFuncionObjetivo>1e-15){
-			mostrarPoblacion(poblacionActual, 2);
-			System.out.println(promedio-maximoIndividuo.valorFuncionObjetivo);
-			System.out.println("\"Oh no.\" -Knuckles");
-		}
 	}
 
 	// API para el frontend.
