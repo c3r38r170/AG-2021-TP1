@@ -1,7 +1,6 @@
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -25,6 +24,7 @@ public class App extends JFrame {
 	private boolean seleccionPorRango=false;
 	
 	private Individuo[] poblacionActual;
+	private double[] vectorFitness;
 	
 	private Individuo maximoIndividuo;
 	private Individuo minimoIndividuo;
@@ -34,8 +34,8 @@ public class App extends JFrame {
 	private int tamañoPoblacion=0;
 	
 	private WebEngine webEngine;
- 
-  // Función que sirve para darle el fitness a cada individuo.
+
+  // Función que sirve para evaluar el desempeño de cada individuo.
 	private double objetivo(Individuo individuo){
 		double valorDecimal=individuo.valorDecimal;
 		return Math.pow(valorDecimal/1073741823/*2^30-1*/,2);
@@ -98,7 +98,7 @@ public class App extends JFrame {
 			poblacionActual[i]=newIndividuo;
 			
 			double fitness=objetivo(poblacionActual[i]);
-			poblacionActual[i].fitness=fitness;
+			poblacionActual[i].valorFuncionObjetivo=fitness;
 			sumatoriaPuntuaciones+=fitness;
 		}
 		
@@ -108,68 +108,51 @@ public class App extends JFrame {
 	
   // Función para realizar cada generación de la simulación.
 	private void nuevaGeneracion(){
-		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
-		int cantidadPares=tamañoPoblacion/2;
 		
-		double[] vectorProbabilidades=new double[tamañoPoblacion];
-		Consumer<Integer> calculoDeProbabilidades=seleccionPorRango?
-			// En la selección por rango, la probabilidad de crossover se basa en el rango (1ro, 2do, 3ro...) del individuo en la población.
-			j->vectorProbabilidades[j]=(1.2-.4* /* j es el rango (0 es el más alto) -> */ j /* <- */ /(tamañoPoblacion-1))/tamañoPoblacion
-			// En la selección por ruleta, usamos el fitness para calcular las probabilidades de crossover.
-			:j->vectorProbabilidades[j]=poblacionActual[j].fitness/sumatoriaPuntuaciones
-		;
+		vectorFitness=new double[tamañoPoblacion];
 		for(int j=0;j<tamañoPoblacion;j++)
-			calculoDeProbabilidades.accept(j);
+			vectorFitness[j]=poblacionActual[j].valorFuncionObjetivo/sumatoriaPuntuaciones;
+			// calculoDeProbabilidades.accept(j);
 		
 		sumatoriaPuntuaciones=0;
+
+		Individuo[] nuevaPoblacion=seleccionPorRango?
+			nuevaGeneracionPorRango()
+			:nuevaGeneracionPorRuleta();
 		
-		if(elitismo){
+		// Por ahora no, dijo el profe.
+		// if(convergencia)
+			// break
+		// else
+			//actualizar poblacionActual
+
+		ordenarPoblacion(nuevaPoblacion);
+		poblacionActual=nuevaPoblacion;
+		
+		calcularMinMaxPro();
+	}
+
+	private Individuo[] nuevaGeneracionPorRuleta(){
+		int cantidadPares=tamañoPoblacion/2;
+		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
+
+		if(elitismo){ // No aplicable a la selección por rango.
 			// Reemplazamos el último par por los mejores individuos. (Recuerde que las poblaciones están ordenadas.)
 			cantidadPares--;
 			nuevaPoblacion[tamañoPoblacion-1]=poblacionActual[0];
 			nuevaPoblacion[tamañoPoblacion-2]=poblacionActual[1];
-			sumatoriaPuntuaciones=poblacionActual[0].fitness+poblacionActual[1].fitness;
+			sumatoriaPuntuaciones=poblacionActual[0].valorFuncionObjetivo+poblacionActual[1].valorFuncionObjetivo;
 		}
 			
-		// Aplicación de selección.
 		for(int j=0;j<cantidadPares;j++){
+			
+			// Aplicación de selección.
 			int j1=j*2,j2=j1+1;
-			boolean elegido1=false
-				,elegido2=false;
-			double selector1=Math.random()
-				,selector2=Math.random()
-				,acc=0;
-			Individuo individuo1=null
-				,individuo2=null;
-			// Los nulls son para que no me tire la advertencia "The local variable may not have been initialized" más abajo en la IDE.
-			
-			// No hay forma de que la probabilidad (selector 1 y 2) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
-			// Por lo que este for va a en algún momento terminar con elegido1 y elegido2.
-			for(int l=0;l<tamañoPoblacion;l++){
-				acc+=vectorProbabilidades[l];
-				if(!elegido1 && acc>selector1){
-					individuo1=poblacionActual[l];
-					elegido1=true;
-				}
-				if(!elegido2 && acc>selector2){
-					individuo2=poblacionActual[l];
-					elegido2=true;
-				}
-				if(elegido1 && elegido2)
-					break;
-			}
-			// Aún así, a veces por división de punto flotante, la suma no es exactamente igual a 1 y el número aleatorio puede entrar en ese margen de error.
-			// Por lo que en ese caso, elegimos el último.
-			// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
-			// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 300 generaciones, pudiendo no aparecer por miles de generaciones.
-		// TODO de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
-			if(!elegido1)
-				individuo1=poblacionActual[tamañoPoblacion-1];
-			if(!elegido2)
-				individuo2=poblacionActual[tamañoPoblacion-1];
-			
+			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness)]
+				,individuo2=poblacionActual[elegirIndicePorRuleta(vectorFitness)];
+	
 			// Aplicación de crossover. (Se encarga la clase Individuo)
-			if(Math.random()>.75){
+			if(individuo1.equals(individuo2) || Math.random()>.75){
 				nuevaPoblacion[j1]=individuo1;
 				nuevaPoblacion[j2]=individuo2;
 			}else{
@@ -186,23 +169,109 @@ public class App extends JFrame {
 			double fitness1=objetivo(nuevaPoblacion[j1])
 				,fitness2=objetivo(nuevaPoblacion[j2]);
 			
-			nuevaPoblacion[j1].fitness=fitness1;
-			nuevaPoblacion[j2].fitness=fitness2;
+			nuevaPoblacion[j1].valorFuncionObjetivo=fitness1;
+			nuevaPoblacion[j2].valorFuncionObjetivo=fitness2;
 			
 			// Fitness acumulada de la generación (sirve para la próxima selección);
 			sumatoriaPuntuaciones+=fitness1+fitness2;
 		}
-		
-		// Por ahora no, dijo el profe.
-		// if(convergencia)
-			// break
-		// else
-			//actualizar poblacionActual
 
-		ordenarPoblacion(nuevaPoblacion);
-		poblacionActual=nuevaPoblacion;
-		
-		calcularMinMaxPro();
+		return nuevaPoblacion;
+	}
+	
+	private Individuo[] nuevaGeneracionPorRango(){
+		Individuo[] nuevaPoblacion=new Individuo[tamañoPoblacion];
+
+		System.out.println("Empieza");
+
+		// Elegimos un M de individuos aleatorio, mayor o igual a 1, menor o igual a la mitad de individuos.
+		// Y pasamos todos los individuos menos los M que reemplazaremos por descendencia de los mejores M.
+		int m=Utils.randomIntBetween(1, tamañoPoblacion/2);
+		System.out.println(m);
+		for(int i=0,til=tamañoPoblacion-m*2;i<til;i++){
+			Individuo delMedio=poblacionActual[i+m];
+			nuevaPoblacion[tamañoPoblacion-i-1]=delMedio;
+			sumatoriaPuntuaciones+=delMedio.valorFuncionObjetivo;
+			System.out.println("saved into "+(tamañoPoblacion-i-1)+": "+delMedio);
+		}
+			
+		for(int j=0;j<m;j++){
+			
+			// Aplicación de selección.
+			int j1=j*2,j2=j1+1;
+			Individuo individuo1=poblacionActual[elegirIndicePorRuleta(vectorFitness,j)]
+				,individuo2=poblacionActual[j];
+			nuevaPoblacion[j2]=individuo2;
+	
+			// Aplicación de crossover. (Se encarga la clase Individuo)
+			nuevaPoblacion[j1]=Math.random()>.75?
+				individuo1
+				// TODO preguntar con qué hijo me quedo
+				:individuo1.crossover(individuo2)[0];
+			
+			// Aplicación de mutación.
+			nuevaPoblacion[j1].aplicarMutacion();
+			// TODO preguntar si aplica
+			individuo2.aplicarMutacion();
+			
+			// Cálculo del valor de la función objetivo para este indivicuo. (Ver método objetivo.)
+			double valor=objetivo(nuevaPoblacion[j1]);
+			nuevaPoblacion[j1].valorFuncionObjetivo=valor;
+			
+			// Sumatoria de todos los resultados de la función objetivo de la generación (sirve para el promedio y la próxima selección);
+			sumatoriaPuntuaciones+=valor+individuo2.valorFuncionObjetivo;
+			System.out.println("pareja: "+j);
+			System.out.println("saved into "+j1+": "+nuevaPoblacion[j1]);
+			System.out.println("saved into "+j2+": "+individuo2);
+		}
+
+		System.out.println("Total: "+sumatoriaPuntuaciones);
+
+		return nuevaPoblacion;
+	}
+
+	private int elegirIndicePorRuleta(double[] vectorFitness, int evitar) {
+		// En este método evitamos uno de los índices.
+		double acc=0
+			,selector=0;
+		for(int i=0,til=vectorFitness.length;i<til;i++){
+			if(i==evitar)
+				continue;
+			selector+=vectorFitness[i];
+		}
+		selector=Math.random()*selector;
+
+		// No hay forma de que la probabilidad (selector) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
+		// Por lo que este for va a en algún momento terminar con un elegido.
+		vectorFitness[evitar]=vectorFitness[vectorFitness.length-1];
+		for(int l=0,til=vectorFitness.length-1;l<til;l++){
+			acc+=vectorFitness[l];
+			if(acc>selector)
+				return l;
+		}
+		// Aún así, a veces por división de punto flotante, la suma no es exactamente igual a 1 y el número aleatorio puede entrar en ese margen de error.
+		// Por lo que en ese caso, elegimos el último.
+		// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
+		// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 600 generaciones, pudiendo no aparecer por miles de generaciones.
+	// TODO ver si el siguiente error todavía pasa: de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
+		return vectorFitness.length-1;
+	}
+
+	private int elegirIndicePorRuleta(double[] vectorFitness){
+		double acc=0,selector=Math.random();
+		// No hay forma de que la probabilidad (selector) sea mayor a 1, y la suma (acc) va a llegar a 1 en algun momento.
+		// Por lo que este for va a en algún momento terminar con un elegido.
+		for(int l=0;l<vectorFitness.length;l++){
+			acc+=vectorFitness[l];
+			if(acc>selector)
+				return l;
+		}
+		// Aún así, a veces por división de punto flotante, la suma no es exactamente igual a 1 y el número aleatorio puede entrar en ese margen de error.
+		// Por lo que en ese caso, elegimos el último.
+		// Técnicamente le estamos asignando el resto de la probabilidad a un cromosoma aleatorio, pero es una probabilidad insignificante.
+		// Esto ocurrió en nuestras simulaciones como máximo en un individuo de cada 600 generaciones, pudiendo no aparecer por miles de generaciones.
+	// TODO ver si el siguiente error todavía pasa: de vez en cuando tira null en alguno (pareja o [j2].aplicarMutacion()), revisar los errores y ver si se arreglaron con esto
+		return vectorFitness.length-1;
 	}
 
 	// Ordenamos la población para facilitar el cálculo del máximo, mínimo y promedio.
@@ -216,12 +285,16 @@ public class App extends JFrame {
 		maximoIndividuo=poblacionActual[0];
 		minimoIndividuo=poblacionActual[tamañoPoblacion-1];
 		promedio=sumatoriaPuntuaciones/tamañoPoblacion;
+		if(Double.compare(promedio,maximoIndividuo.valorFuncionObjetivo)>0){
+			System.out.println(promedio-maximoIndividuo.valorFuncionObjetivo);
+			System.out.println("\"Oh no.\" -Knuckles");
+		}
 	}
 
 	// API para el frontend.
 
 	private void mandarGeneracionActual(){
-		StringBuilder JSCommand=new StringBuilder("proximaGeneracion({min:"+minimoIndividuo.fitness+",pro:"+promedio+",max:"+maximoIndividuo.fitness+",individuos:[");
+		StringBuilder JSCommand=new StringBuilder("proximaGeneracion({min:"+minimoIndividuo.valorFuncionObjetivo+",pro:"+promedio+",max:"+maximoIndividuo.valorFuncionObjetivo+",individuos:[");
 		
 		String[] poblacionAsJSON=new String[tamañoPoblacion];
 		for (int i = 0; i < tamañoPoblacion; i++)

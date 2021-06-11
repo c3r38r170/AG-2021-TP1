@@ -129,6 +129,8 @@ function proximaGeneracion(generacion){
 	generacionesTabla.append(nuevaGeneracion);
 }
 
+// TODO rango on check disable elitismo
+
 //onload
 addEventListener('DOMContentLoaded',()=>{
 	$('table').bootstrapTable({

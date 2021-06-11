@@ -2,7 +2,7 @@ public class Individuo implements Comparable<Individuo>{
 	
 	boolean[] cromosoma;
 	int valorDecimal=0;
-	double fitness;
+	double valorFuncionObjetivo;
 	
 	public Individuo(boolean[] cromosoma){
 		this.cromosoma=cromosoma;
@@ -15,6 +15,10 @@ public class Individuo implements Comparable<Individuo>{
 	}
 	
 	public Individuo[] crossover(Individuo pareja){
+
+		if(this.equals(pareja)){
+			return new Individuo[]{this,this};
+		}
 
     // Elegir un punto.
     // Crear 2 nuevos cromosomas.
@@ -63,16 +67,21 @@ public class Individuo implements Comparable<Individuo>{
 	}
 
 	public String toJSONObject() {
-		return "{fitness:"+fitness+",cromosoma:\""+cromosomaToString()+"\",valorDecimal:"+valorDecimal+"}";
+		return "{fitness:"+valorFuncionObjetivo+",cromosoma:\""+cromosomaToString()+"\",valorDecimal:"+valorDecimal+"}";
 	}
 	
 	@Override
 	public String toString(){
-		return "["+cromosomaToString().replace("0", " ")+" | "+valorDecimal+"]";
+		return "["+cromosomaToString().replace("0", " ")+" | "+valorDecimal+" | "+valorFuncionObjetivo+"]";
 	}
 	
 	@Override
 	public int compareTo(Individuo otro) {
 		return otro.valorDecimal - this.valorDecimal;
+	}
+
+	@Override
+	public boolean equals(Object otro){
+		return ((Individuo)otro).valorDecimal == this.valorDecimal;
 	}
 }
